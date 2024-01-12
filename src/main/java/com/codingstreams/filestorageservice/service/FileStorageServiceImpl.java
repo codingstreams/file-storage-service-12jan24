@@ -2,11 +2,18 @@ package com.codingstreams.filestorageservice.service;
 
 import com.codingstreams.filestorageservice.FileMetadataRepo;
 import com.codingstreams.filestorageservice.dto.FileUploadResponse;
+import com.codingstreams.filestorageservice.model.FileMetadata;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -19,28 +26,48 @@ public class FileStorageServiceImpl implements FileStorageService {
 
   @Override
   public FileUploadResponse uploadFile(MultipartFile file) {
-    // Check upload folder exists or not
+    try {
+      // Check upload folder exists or not
+      if (!Files.exists(Path.of(uploadPath))) {
+        // Create upload folder
+        Files.createDirectories(Path.of(uploadPath));
+      }
 
-    // Create upload folder
+      // Original filename
+      // image.png -> .png
+      var originalFilename = file.getOriginalFilename();
 
-    // Original filename
-    // image.png -> .png
+      // File extension
+      var fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
 
-    // File extension
+      // Upload file name
+      var uploadFilename = UUID.randomUUID() + fileExtension;
 
-    // Upload file name
+      // Create meta-data object
+      var fileMetadata = FileMetadata.builder()
+          .originalFilename(originalFilename)
+          .fileExtension(fileExtension)
+          .uploadFilename(uploadFilename)
+          .build();
 
-    // Create meta-data object
+      // Save file meta-data
+      fileMetadataRepo.save(fileMetadata);
 
-    // Save file meta-data
+      // Save file
+      // ./uploads/uploadFilename.extension
+      var targetPath = uploadPath + "/" + uploadFilename;
 
-    // Save file
-    // ./uploads/uploadFilename.extension
+      // Copy the file to target location
+      Files.copy(file.getInputStream(), Path.of(targetPath), StandardCopyOption.REPLACE_EXISTING);
 
-    // Copy the file to target location
+      // return file upload response
+      return FileUploadResponse.builder()
+          .filename(uploadFilename)
+          .downloadUrl("/api/files/download/" + uploadFilename)
+          .build();
 
-    // return file upload response
-
-    return null;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
