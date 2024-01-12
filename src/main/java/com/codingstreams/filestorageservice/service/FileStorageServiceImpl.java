@@ -1,10 +1,10 @@
 package com.codingstreams.filestorageservice.service;
 
-import com.codingstreams.filestorageservice.FileMetadataRepo;
 import com.codingstreams.filestorageservice.dto.FileUploadResponse;
 import com.codingstreams.filestorageservice.exception.FileNotFoundException;
 import com.codingstreams.filestorageservice.exception.UnableToFetchFileException;
 import com.codingstreams.filestorageservice.model.FileMetadata;
+import com.codingstreams.filestorageservice.repository.FileMetadataRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

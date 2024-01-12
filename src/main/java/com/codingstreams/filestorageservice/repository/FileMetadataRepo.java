@@ -1,4 +1,4 @@
-package com.codingstreams.filestorageservice;
+package com.codingstreams.filestorageservice.repository;
 
 import com.codingstreams.filestorageservice.model.FileMetadata;
 import org.springframework.data.repository.CrudRepository;
