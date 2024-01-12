@@ -2,13 +2,17 @@ package com.codingstreams.filestorageservice.service;
 
 import com.codingstreams.filestorageservice.FileMetadataRepo;
 import com.codingstreams.filestorageservice.dto.FileUploadResponse;
+import com.codingstreams.filestorageservice.exception.FileNotFoundException;
+import com.codingstreams.filestorageservice.exception.UnableToFetchFileException;
 import com.codingstreams.filestorageservice.model.FileMetadata;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,6 +72,26 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     } catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public ByteArrayResource downloadFile(String filename) {
+    log.info("[downloadFile] - START");
+    // Fetch file meta-data by filename
+    var fileMetadata = fileMetadataRepo.findByUploadFilename(filename)
+        .orElseThrow(FileNotFoundException::new);
+
+    // Create resource path
+    var resourcePath = uploadPath + "/" + fileMetadata.getUploadFilename();
+
+    // Fetch file data
+    try (var fileInputStream = new FileInputStream(resourcePath)) {
+      log.info("[downloadFile] - END");
+      return new ByteArrayResource(fileInputStream.readAllBytes());
+    } catch (IOException e) {
+      log.info("[downloadFile] - ERROR - {}", e.getMessage());
+      throw new UnableToFetchFileException();
     }
   }
 }
